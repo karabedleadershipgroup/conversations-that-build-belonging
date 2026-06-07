@@ -1377,11 +1377,20 @@ function ScenarioMode({ t, lang, onBack, bump }) {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: buildCoachPrompt(lang, sc.context, resp) }),
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: buildCoachPrompt(lang, sc.context, resp) }],
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "error");
-      const text = (data.text || "").trim();
+      const text = (data.content || [])
+        .filter((b) => b.type === "text")
+        .map((b) => b.text)
+        .join("\n")
+        .trim();
+      if (!text) throw new Error("empty");
       setFeedback(text);
       bump();
     } catch (e) {
@@ -1551,23 +1560,26 @@ function AskIsaMode({ t, lang, onBack, bump }) {
     setLoading(true);
     setErr(false);
     try {
-      const transcript = nextHistory
-        .slice(-8)
-        .map((m) => (m.role === "user" ? "PERSON: " : "DR. ISA: ") + m.content)
-        .join("\n\n");
-      const prompt =
-        buildIsaPrompt(lang) +
-        "\n\nCONVERSATION SO FAR:\n" +
-        transcript +
-        "\n\nReply now as Dr. Isa, short and in her voice. Do not prefix your reply with a label.";
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system:
+            buildIsaPrompt(lang) +
+            "\n\nReply as Dr. Isa, short and in her voice. Do not prefix your reply with a label.",
+          messages: nextHistory.slice(-8),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "error");
-      const reply = (data.text || "").trim();
+      const reply = (data.content || [])
+        .filter((b) => b.type === "text")
+        .map((b) => b.text)
+        .join("\n")
+        .trim();
+      if (!reply) throw new Error("empty");
       setHistory([...nextHistory, { role: "assistant", content: reply }]);
       bump();
     } catch (e) {
