@@ -1378,7 +1378,7 @@ function ScenarioMode({ t, lang, onBack, bump }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-6",
           max_tokens: 1000,
           messages: [{ role: "user", content: buildCoachPrompt(lang, sc.context, resp) }],
         }),
@@ -1564,7 +1564,7 @@ function AskIsaMode({ t, lang, onBack, bump }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-6",
           max_tokens: 1000,
           system:
             buildIsaPrompt(lang) +
